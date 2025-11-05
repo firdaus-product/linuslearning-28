@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kemahiran Pemulihan: Menyusun Nombor (Mod Pembelajaran)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ====== Global look & feel ====== */
+    body{ box-sizing:border-box; background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 60%,#f1f5f9 100%); }
+    .sheet{ background:#fff; border-radius:22px; box-shadow:0 12px 40px rgba(2,6,23,.08); }
+    .btn{ border-radius:14px; font-weight:800; padding:.8rem 1.15rem; }
+    .btn-pill{ border-radius:9999px; }
+    .btn-ghost{ background:#f3f4f6; color:#111827; }
+    .headline{ letter-spacing:.2px; }
+
+    /* Info bar pill */
+    .infobar{ background:#fef3c7; border:1px solid #fde68a; border-bottom-width:4px; border-radius:9999px; }
+    .speak-btn{ background:#fde047; color:#7c2d12; border-radius:9999px; padding:.6rem 1.1rem; font-weight:900; box-shadow:0 8px 22px rgba(180,132,32,.25); }
+    .speak-btn:hover{ filter:brightness(1.05); }
+
+    /* Badge ikon di hero */
+    .hero-badge{
+      width:56px;height:56px;border-radius:12px;
+      background:linear-gradient(180deg,#9cc2ff 0%,#7aa7ff 100%);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;color:#fff;letter-spacing:.8px; box-shadow:0 8px 22px rgba(30,64,175,.25);
+    }
+
+    /* Komponen bantuan pembelajaran */
+    .hint-chip{ background:#e0f2fe; color:#075985; border-radius:9999px; padding:.25rem .6rem; font-weight:800; box-shadow:0 4px 12px rgba(2,6,23,.06); }
+    .ghost{ opacity:.5; }
+    .shake{ animation:shake .25s ease-out; }
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+    /* Drag & drop (umum) */
+    .drag-item{ cursor:grab; }
+    .drag-item:active{ cursor:grabbing; }
+    .dragging{ opacity:.5; transform:rotate(3deg); }
+    .drop-zone{ min-height:60px; border:2px dashed #cbd5e1; transition:all .2s ease; display:flex; flex-wrap:wrap; align-items:start; justify-content:center; padding: 4px; }
+    .drop-zone.drag-over{ border-color:#3b82f6; background:#eff6ff; }
+
+    /* Aktiviti 1: Bentuk Lazim */
+    .pv-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; max-width:520px; margin:auto; }
+    .pv-cell{ height:64px; border:1px solid #e5e7eb; background:#f9fafb; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:900; }
+    .pv-colhdr{ font-weight:900; color:#334155 }
+    .pv-answer{ background:#fff7ed; border-top:2px solid #111827 }
+    .pv-focus{ box-shadow:0 0 0 3px #10b98155; background:#ecfdf5; }
+
+    /* Aktiviti 2: Blok (DIKEMASKINI) */
+    .work-area{ border:2px dashed #9ca3af; background:#f3f4f6; padding:1rem; min-height:130px; border-radius:14px; }
+    .block{ display:inline-block; margin:2px; border:1px solid #4b5563; background:#60a5fa; box-shadow:1px 1px 3px rgba(0,0,0,.2) }
+    .block-ten{ width:14px; height:78px } .block-one{ width:14px; height:14px }
+    .work-area .block.drag-item { margin-top: 5px; margin-bottom: 5px; }
+
+    /* Aktiviti 3: Petak 100 */
+    .grid-cell{ transition:background-color .15s ease }
+    .grid-start{ background:#a7f3d0!important; font-weight:800 }
+    .grid-path{ background:#fde68a!important }
+    .grid-end{ background:#fecaca!important; font-weight:800; transform:scale(1.06) }
+    #frog{ position:absolute; font-size:1.35rem; transition:transform .25s ease }
+
+    /* Aktiviti 4: Padankan (mod penerangan) */
+    .card-q{ background:#e0e7ff; border:2px solid #c7d2fe }
+    .card-a{ background:#dcfce7; border:2px solid #bbf7d0 }
+    .glow{ box-shadow:0 0 0 3px #f59e0b77 }
+
+    /* Aktiviti 5: Susun (auto-guide) */
+    .slot{ width:86px; height:60px; border:2px dashed #cbd5e1; border-radius:12px; display:flex; align-items:center; justify-content:center; background:#f8fafc }
+    .slot.ready{ background:#ecfeff; border-color:#06b6d4 }
+    .chip-num{ background:#f3e8ff; border:2px solid #e9d5ff; border-radius:12px; padding:.5rem 1rem; font-weight:900; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Info bar -->
+  <div class="max-w-6xl mx-auto px-4 pt-5">
+    <div class="infobar px-5 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📚</span>
+        <span id="info" class="text-lg font-extrabold text-gray-800">Pilih aktiviti untuk mula belajar nombor!</span>
+      </div>
+      <button class="speak-btn text-xl" onclick="speakNow()">🔊</button>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- HERO / LANDING -->
+    <div class="sheet p-8 mb-6">
+      <div id="landing" class="text-center">
+        <div class="flex items-center justify-center mb-5">
+          <div class="hero-badge"><span style="line-height:1">12<br/>34</span></div>
+        </div>
+        <h1 class="headline text-3xl md:text-[2.1rem] font-extrabold text-gray-900 mb-2">
+          Kemahiran Pemulihan: Menyusun Nombor 1–100
+        </h1>
+        <p class="text-gray-600 text-lg">Pilih aktiviti di bawah untuk meneroka susunan nombor secara santai.</p>
+        <div class="text-4xl mt-3">👇</div>
+      </div>
+
+      <!-- ===== Aktiviti 1: Bentuk Lazim ===== -->
+      <section id="act1" class="hidden">
+        <h2 class="text-3xl font-extrabold text-center mb-2 text-blue-700">✍️ Mesin Tambah (Bentuk Lazim)</h2>
+        <p class="text-center text-gray-600 mb-4">Ikut turutan: <span class="hint-chip">Sa ➜ Puluh</span> • Item yang salah akan “melantun” balik sebagai petunjuk.</p>
+
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="hint-chip" id="pv-tag1"></span>
+          <span>+</span>
+          <span class="hint-chip" id="pv-tag2"></span>
+        </div>
+
+        <div class="pv-grid mb-3">
+          <div class="pv-colhdr text-center">Puluh</div>
+          <div class="pv-colhdr text-center">Sa</div>
+          <div></div>
+
+          <div id="pv-t1" class="pv-cell drop-zone" data-place="tens" data-row="1"></div>
+          <div id="pv-o1" class="pv-cell drop-zone" data-place="ones" data-row="1"></div>
+          <div class="pv-colhdr text-center ghost">Nombor 1</div>
+
+          <div id="pv-t2" class="pv-cell drop-zone" data-place="tens" data-row="2"></div>
+          <div id="pv-o2" class="pv-cell drop-zone" data-place="ones" data-row="2"></div>
+          <div class="pv-colhdr text-center ghost">Nombor 2</div>
+
+          <div id="pv-ta" class="pv-cell pv-answer drop-zone" data-place="tens" data-row="ans">?</div>
+          <div id="pv-oa" class="pv-cell pv-answer drop-zone" data-place="ones" data-row="ans">?</div>
+          <div class="pv-colhdr text-center">Jawapan</div>
+        </div>
+
+        <div class="text-center text-gray-600 mb-2">Seret kepingan nombor:</div>
+        <div id="pv-bank" class="flex flex-wrap gap-2 justify-center"></div>
+
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button class="btn btn-ghost" onclick="pvHint()">💡 Tunjuk Petunjuk</button>
+          <button class="btn bg-sky-600 hover:bg-sky-700 text-white" onclick="pvNew()">🔁 Soalan Baharu</button>
+        </div>
+      </section>
+
+      <!-- ===== Aktiviti 2: Gabung Blok ===== -->
+      <section id="act2" class="hidden">
+        <h2 class="text-3xl font-extrabold text-center mb-2 text-purple-700">🧱 Gabung Blok (Berpandu)</h2>
+        <p class="text-center text-gray-600 mb-4">Ikut arahan langkah demi langkah untuk menambah.</p>
+
+        <div class="text-center text-3xl font-extrabold mb-4"><span id="gb-q"></span></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <div class="text-center font-bold text-gray-600 mb-1">Kawasan 1 (Bina Nombor 1)</div>
+            <div id="gb-area1" class="work-area drop-zone"></div>
+          </div>
+          <div>
+            <div class="text-center font-bold text-gray-600 mb-1">Kawasan 2 (Bina Nombor 2)</div>
+            <div id="gb-area2" class="work-area drop-zone"></div>
+          </div>
+        </div>
+
+        <div class="sheet p-4 mt-2 mb-4">
+          <h4 class="text-lg font-extrabold text-center text-slate-700 mb-2">Kawasan Hasil (Gabung)</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <div class="text-center font-bold text-gray-600 mb-1">Hasil Puluh</div>
+              <div id="gb-ans-t" class="work-area drop-zone" style="min-height: 80px;"></div>
+            </div>
+            <div>
+              <div class="text-center font-bold text-gray-600 mb-1">Hasil Sa</div>
+              <div id="gb-ans-o" class="work-area drop-zone" style="min-height: 80px; background-color: #f0fdf4;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center font-semibold text-gray-600 mb-1">Blok rujukan (seret ke kawasan):</div>
+        <div class="flex items-end justify-center gap-6 mb-2" data-zone="bank">
+          <div class="text-center">
+            <div class="block block-ten drag-item" draggable="true" data-type="ten" style="background:#60a5fa"></div>
+            <div class="mt-1 text-xs font-bold text-gray-600">Puluh</div>
+          </div>
+          <div class="text-center">
+            <div class="block block-one drag-item" draggable="true" data-type="one" style="background:#34d399"></div>
+            <div class="mt-1 text-xs font-bold text-gray-600">Sa</div>
+          </div>
+        </div>
+
+        <div class="sheet p-4 mt-4 text-center">
+          <div class="text-lg font-extrabold">Kesimpulan:</div>
+          <div id="gb-explain" class="text-xl font-bold text-slate-700">Selesaikan langkah di atas.</div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button class="btn btn-ghost" onclick="gbHint()">💡 Petunjuk</button>
+          <button class="btn bg-purple-600 hover:bg-purple-700 text-white" onclick="gbNew()">🔁 Set Baharu</button>
+        </div>
+      </section>
+
+      <!-- ===== Aktiviti 3: Petak 100 ===== -->
+      <section id="act3" class="hidden">
+        <h2 class="text-3xl font-extrabold text-center mb-2 text-emerald-700">🐸 Kira Guna Petak 100</h2>
+        <p class="text-center text-gray-600 mb-4">Tekan <span class="hint-chip">Mainkan Langkah</span> atau klik petak seterusnya. Salah klik? Anak panah akan tunjuk ke petak betul.</p>
+
+        <div class="text-center text-xl font-extrabold mb-3" id="hg-title"></div>
+
+        <div class="relative max-w-xl mx-auto">
+          <div id="frog">🐸</div>
+          <div id="grid" class="grid grid-cols-10 gap-1"></div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <button class="btn btn-ghost" onclick="hgStep()">▶️ Mainkan Langkah</button>
+          <button class="btn bg-emerald-600 hover:bg-emerald-700 text-white" onclick="hgNew()">🔁 Soalan Baharu</button>
+        </div>
+
+        <div id="hg-work" class="text-center mt-4 text-lg font-bold text-slate-700"></div>
+      </section>
+
+      <!-- ===== Aktiviti 4: Padankan ===== -->
+      <section id="act4" class="hidden">
+        <h2 class="text-3xl font-extrabold text-center mb-2 text-rose-700">🎪 Padankan & Fahami</h2>
+        <p class="text-center text-gray-600 mb-4">Klik mana-mana soalan untuk <b>lihat cara kira</b>; jawapan sepadan akan disorot.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div class="text-center font-bold text-gray-600 mb-2">Soalan</div>
+            <div id="mx-q" class="space-y-3"></div>
+          </div>
+          <div>
+            <div class="text-center font-bold text-gray-600 mb-2">Jawapan</div>
+            <div id="mx-a" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <div id="mx-exp" class="sheet p-4 mt-4 text-center text-lg font-bold text-slate-700">Klik satu soalan untuk penerangan.</div>
+      </section>
+
+      <!-- ===== Aktiviti 5: Susun ===== -->
+      <section id="act5" class="hidden">
+        <h2 class="text-3xl font-extrabold text-center mb-2 text-indigo-700">🔄 Susun Hasil Tambah</h2>
+        <p class="text-center text-gray-600 mb-4">Seret nombor. Sistem akan <b>membantu letak</b> ke posisi yang betul secara automatik.</p>
+
+        <div class="flex justify-center flex-wrap gap-3 mb-3" id="s-pool"></div>
+
+        <div class="flex justify-center gap-2 mb-2">
+          <div class="slot" data-pos="0"></div>
+          <div class="slot" data-pos="1"></div>
+          <div class="slot" data-pos="2"></div>
+          <div class="slot" data-pos="3"></div>
+          <div class="slot" data-pos="4"></div>
+        </div>
+        <div class="text-center text-sm text-slate-600 mb-4" id="s-caption">← paling kecil | paling besar →</div>
+
+        <div class="flex items-center justify-center gap-2">
+          <button class="btn btn-ghost" onclick="sDemo()">✨ Auto-Susun (Contoh)</button>
+          <button class="btn bg-indigo-600 hover:bg-indigo-700 text-white" onclick="sNew()">🔁 Set Baharu</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- PILIH AKTIVITI (gaya mockup) -->
+    <div class="sheet p-6">
+      <h3 class="text-center text-2xl font-extrabold text-gray-900 mb-4">Pilih Aktiviti</h3>
+      <div class="flex flex-wrap justify-center gap-4 mb-5">
+        <button class="btn btn-pill text-white bg-blue-600 hover:bg-blue-700"
+                onclick="go(3)">🎯 Klik Nombor</button>
+
+        <button class="btn btn-pill text-white bg-green-600 hover:bg-green-700"
+                onclick="go(2)">🚂 Gerabak Keretapi</button>
+
+        <button class="btn btn-pill text-white bg-purple-600 hover:bg-purple-700"
+                onclick="go(1)">🏰 Bina Sebutan</button>
+
+        <button class="btn btn-pill text-white bg-orange-500 hover:bg-orange-600"
+                onclick="sMode='asc'; go(5)">👕 Sidai Baju (Naik)</button>
+
+        <button class="btn btn-pill text-white bg-rose-600 hover:bg-rose-700"
+                onclick="sMode='desc'; go(5)">👕 Sidai Baju (Turun)</button>
+      </div>
+
+      <div class="flex justify-center gap-3">
+        <button class="btn btn-ghost" onclick="home()">🧹 Bersih</button>
+        <button class="btn text-white bg-indigo-600 hover:bg-indigo-700" onclick="next()">➡️ Seterusnya</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================== Util & TTS (versi BM + fallback) ==================
+    let page=0, tts=false, infoEl=document.getElementById('info');
+    let selectedVoice=null;
+
+    function setInfo(t){ infoEl.textContent=t; if(tts) speak(t); }
+    function speakNow(){ tts=true; speak(infoEl.textContent); }
+
+    function pickMalayishVoice(){
+      const voices = window.speechSynthesis.getVoices();
+      // 1) Cari ms-* (Malay/Malaysia)
+      let v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith('ms'));
+      // 2) fallback: id-* (Indonesia)
+      if(!v) v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith('id'));
+      // 3) fallback terakhir: default pertama
+      if(!v) v = voices[0] || null;
+      return v;
+    }
+
+    function loadVoices(){
+      if(!('speechSynthesis' in window)) return;
+      selectedVoice = pickMalayishVoice();
+    }
+
+    if('speechSynthesis' in window){
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    function speak(text){
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = (selectedVoice && selectedVoice.lang) ? selectedVoice.lang : 'ms-MY';
+      u.rate = 0.95;   // perlahan sikit untuk jelas
+      u.pitch = 1.0;   // nada neutral
+      if(selectedVoice) u.voice = selectedVoice;
+      setTimeout(()=>speechSynthesis.speak(u),60);
+    }
+
+    function home(){
+      [...document.querySelectorAll('#act1,#act2,#act3,#act4,#act5')].forEach(e=>e.classList.add('hidden'));
+      document.getElementById('landing').classList.remove('hidden');
+      page=0; setInfo('Pilih aktiviti untuk mula belajar nombor!');
+    }
+    function go(n){
+      document.getElementById('landing').classList.add('hidden');
+      [...document.querySelectorAll('#act1,#act2,#act3,#act4,#act5')].forEach(e=>e.classList.add('hidden'));
+      document.getElementById('act'+n).classList.remove('hidden');
+      page=n;
+      if(n===1) pvNew();
+      if(n===2) gbNew();
+      if(n===3) hgNew();
+      if(n===4) mxNew();
+      if(n===5) sNew();
+    }
+    function next(){ go(page? (page%5)+1 : 1); }
+
+    // DnD helpers
+    let dragging=null;
+    function dragStart(e){
+      dragging=e.target;
+      const ds = e.target.dataset || {};
+      e.dataTransfer.setData('text/plain', JSON.stringify(ds));
+      setTimeout(()=>e.target.classList.add('dragging'),0);
+    }
+    function dragEnd(){ if(dragging){ dragging.classList.remove('dragging'); dragging=null } }
+    function allow(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over') }
+    function leave(e){ e.currentTarget.classList.remove('drag-over') }
+
+    // ================== Aktiviti 1: PV ==================
+    let pv={n1:0,n2:0,stage:'b1',ones:0,tens:0};
+    function pvNew(){
+      const qs=[{n1:15,n2:3},{n1:44,n2:25},{n1:52,n2:7},{n1:23,n2:16}];
+      pv=qs[Math.floor(Math.random()*qs.length)];
+      pv.stage='b1'; pv.ones=(pv.n1%10)+(pv.n2%10); pv.tens=Math.floor(pv.n1/10)+Math.floor(pv.n2/10);
+
+      document.getElementById('pv-tag1').textContent=pv.n1;
+      document.getElementById('pv-tag2').textContent=pv.n2;
+
+      ['t1','o1','t2','o2','ta','oa'].forEach(id=>{
+        const el=document.getElementById('pv-'+id);
+        el.textContent = (id==='ta'||id==='oa') ? '?' : '';
+        el.classList.remove('pv-focus');
+        el.ondrop=pvDrop; el.ondragover=allow; el.ondragleave=leave;
+      });
+
+      const bank=document.getElementById('pv-bank'); bank.innerHTML='';
+      const pieces=[
+        {v:Math.floor(pv.n1/10), place:'tens', row:'1'},
+        {v:pv.n1%10,             place:'ones', row:'1'},
+        {v:Math.floor(pv.n2/10), place:'tens', row:'2'},
+        {v:pv.n2%10,             place:'ones', row:'2'},
+      ].filter(x=>x.v>0);
+      pieces.forEach(p=>{
+        const d=document.createElement('div');
+        d.className='drag-item bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-2xl font-black';
+        d.textContent=p.v; d.draggable=true; d.dataset.value=p.v; d.dataset.place=p.place; d.dataset.row=p.row;
+        d.addEventListener('dragstart',dragStart); d.addEventListener('dragend',dragEnd);
+        bank.appendChild(d);
+      });
+
+      document.getElementById('pv-o1').classList.add('pv-focus');
+      setInfo(`Letak sa bagi ${pv.n1} (nilai ${pv.n1%10}) ke lajur "Sa".`);
+    }
+    function pvHint(){
+      if(pv.stage==='b1') setInfo(`Nombor ${pv.n1}: Puluh = ${Math.floor(pv.n1/10)}, Sa = ${pv.n1%10}.`);
+      else if(pv.stage==='b2') setInfo(`Nombor ${pv.n2}: Puluh = ${Math.floor(pv.n2/10)}, Sa = ${pv.n2%10}.`);
+      else if(pv.stage==='o') setInfo(`Tambah sa: ${pv.n1%10} + ${pv.n2%10} = ${pv.ones}.`);
+      else if(pv.stage==='t') setInfo(`Tambah puluh: ${Math.floor(pv.n1/10)} + ${Math.floor(pv.n2/10)} = ${pv.tens}.`);
+    }
+    function pvDrop(e){
+      e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+      if(!dragging) return;
+      const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+      const wantRow=e.currentTarget.dataset.row, wantPlace=e.currentTarget.dataset.place;
+
+      if(data.row!==wantRow || data.place!==wantPlace){ dragging.classList.add('shake'); setTimeout(()=>dragging.classList.remove('shake'),220); return; }
+
+      e.currentTarget.textContent=data.value;
+      dragging.remove();
+
+      if(pv.stage==='b1' && wantRow==='1' && wantPlace==='ones'){
+        document.getElementById('pv-o1').classList.remove('pv-focus');
+        document.getElementById('pv-t1').classList.add('pv-focus');
+        setInfo('Bagus! Sekarang letakkan puluh bagi nombor pertama.');
+      }
+      else if(pv.stage==='b1' && wantRow==='1' && wantPlace==='tens'){
+        pv.stage='b2';
+        document.getElementById('pv-t1').classList.remove('pv-focus');
+        document.getElementById('pv-o2').classList.add('pv-focus');
+        setInfo(`Sekarang bina nombor ${pv.n2} — mula dengan "Sa".`);
+      }
+      else if(pv.stage==='b2' && wantRow==='2' && wantPlace==='ones'){
+        document.getElementById('pv-o2').classList.remove('pv-focus');
+        document.getElementById('pv-t2').classList.add('pv-focus');
+        setInfo('Letakkan "Puluh" bagi nombor kedua.');
+      }
+      else if(pv.stage==='b2' && wantRow==='2' && wantPlace==='tens'){
+        pv.stage='o';
+        document.getElementById('pv-t2').classList.remove('pv-focus');
+        document.getElementById('pv-oa').classList.add('pv-focus');
+        makeAnswerPieces('ones', pv.ones);
+        setInfo('Tambah lajur Sa. Seret jawapan ke kotak Sa (kuning).');
+      }
+      else if(pv.stage==='o' && wantRow==='ans' && wantPlace==='ones'){
+        pv.stage='t';
+        document.getElementById('pv-oa').classList.remove('pv-focus');
+        document.getElementById('pv-ta').classList.add('pv-focus');
+        makeAnswerPieces('tens', pv.tens);
+        setInfo('Bagus! Sekarang tambah lajur Puluh.');
+      }
+      else if(pv.stage==='t' && wantRow==='ans' && wantPlace==='tens'){
+        document.getElementById('pv-ta').classList.remove('pv-focus');
+        const final = pv.tens*10 + pv.ones;
+        setInfo(`Siap! ${pv.n1} + ${pv.n2} = ${final}. Tekan "Soalan Baharu" untuk latihan lain.`);
+      }
+    }
+    function makeAnswerPieces(place,ans){
+      const bank=document.getElementById('pv-bank'); bank.innerHTML='';
+      const choices=[ans, ans+1, Math.max(0,ans-1)];
+      choices.sort(()=>Math.random()-.5).forEach(v=>{
+        const d=document.createElement('div');
+        d.className='drag-item bg-amber-50 border-2 border-amber-200 rounded-xl px-4 py-3 text-2xl font-black';
+        d.textContent=v; d.draggable=true; d.dataset.value=v; d.dataset.place=place; d.dataset.row='ans';
+        d.addEventListener('dragstart',dragStart); d.addEventListener('dragend',dragEnd);
+        bank.appendChild(d);
+      });
+    }
+
+    // ================== Aktiviti 2: Gabung Blok (Logik Baharu) ==================
+    let gb = {
+      n1: 0, n2: 0,
+      n1_t: 0, n1_o: 0, n2_t: 0, n2_o: 0,
+      built_n1_t: 0, built_n1_o: 0, built_n2_t: 0, built_n2_o: 0,
+      moved_t: 0, moved_o: 0,
+      stage: 'build1'
+    };
+    const allZones = ['gb-area1', 'gb-area2', 'gb-ans-t', 'gb-ans-o'];
+    const bankTens = document.querySelector('.drag-item[data-type="ten"]');
+    const bankOnes = document.querySelector('.drag-item[data-type="one"]');
+
+    function gbNew() {
+      const pairs = [[12, 5], [21, 13], [14, 7], [32, 11]];
+      const pick = pairs[Math.floor(Math.random() * pairs.length)];
+
+      gb = {
+        n1: pick[0], n2: pick[1],
+        n1_t: Math.floor(pick[0] / 10), n1_o: pick[0] % 10,
+        n2_t: Math.floor(pick[1] / 10), n2_o: pick[1] % 10,
+        built_n1_t: 0, built_n1_o: 0, built_n2_t: 0, built_n2_o: 0,
+        moved_t: 0, moved_o: 0,
+        stage: 'build1'
+      };
+
+      document.getElementById('gb-q').textContent = `${gb.n1}  +  ${gb.n2}`;
+      document.getElementById('gb-explain').textContent = 'Selesaikan langkah di atas.';
+
+      allZones.forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        el.ondrop = (e) => gbDrop(e, id);
+        el.ondragover = allow;
+        el.ondragleave = leave;
+        el.classList.remove('pv-focus');
+      });
+
+      bankTens.draggable = true;
+      bankOnes.draggable = true;
+      if (!bankTens.dataset.listener) {
+        bankTens.addEventListener('dragstart', dragStart); bankTens.addEventListener('dragend', dragEnd);
+        bankOnes.addEventListener('dragstart', dragStart); bankOnes.addEventListener('dragend', dragEnd);
+        bankTens.dataset.listener = 'true'; bankOnes.dataset.listener = 'true';
+      }
+
+      document.getElementById('gb-area1').classList.add('pv-focus');
+      setInfo(`Langkah 1: Bina nombor ${gb.n1} di Kawasan 1.`);
+    }
+
+    function gbDrop(e, zoneId) {
+      e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+      if (!dragging) return;
+
+      const data = JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+      const type = data.type;
+      const isFromBank = dragging.closest('[data-zone="bank"]') !== null;
+
+      if (gb.stage === 'build1' && zoneId === 'gb-area1' && isFromBank) {
+        const clone = dragging.cloneNode(true);
+        clone.classList.remove('drag-item');
+        e.currentTarget.appendChild(clone);
+        if (type === 'ten') gb.built_n1_t++; else gb.built_n1_o++;
+        gbCheckStage(); return;
+      }
+
+      if (gb.stage === 'build2' && zoneId === 'gb-area2' && isFromBank) {
+        const clone = dragging.cloneNode(true);
+        clone.classList.remove('drag-item');
+        e.currentTarget.appendChild(clone);
+        if (type === 'ten') gb.built_n2_t++; else gb.built_n2_o++;
+        gbCheckStage(); return;
+      }
+
+      if (gb.stage === 'move_sa' && zoneId === 'gb-ans-o' && !isFromBank && type === 'one') {
+        e.currentTarget.appendChild(dragging);
+        gb.moved_o++; gbCheckStage(); return;
+      }
+
+      if (gb.stage === 'move_puluh' && zoneId === 'gb-ans-t' && !isFromBank && type === 'ten') {
+        e.currentTarget.appendChild(dragging);
+        gb.moved_t++; gbCheckStage(); return;
+      }
+
+      dragging.classList.add('shake');
+      setTimeout(() => dragging.classList.remove('shake'), 220);
+    }
+
+    function gbCheckStage() {
+      const total_o = gb.n1_o + gb.n2_o;
+      const total_t = gb.n1_t + gb.n2_t;
+
+      if (gb.stage === 'build1' && gb.built_n1_t === gb.n1_t && gb.built_n1_o === gb.n1_o) {
+        gb.stage = 'build2';
+        setInfo(`Bagus! Langkah 2: Bina nombor ${gb.n2} di Kawasan 2.`);
+        document.getElementById('gb-area1').classList.remove('pv-focus');
+        document.getElementById('gb-area2').classList.add('pv-focus');
+      }
+      else if (gb.stage === 'build2' && gb.built_n2_t === gb.n2_t && gb.built_n2_o === gb.n2_o) {
+        gb.stage = 'move_sa';
+        setInfo(`Hebat! Langkah 3: Gabung. Seret semua blok SA (hijau) ke Hasil Sa.`);
+        document.getElementById('gb-area2').classList.remove('pv-focus');
+        document.getElementById('gb-ans-o').classList.add('pv-focus');
+        gbMakeDraggable('gb-area1');
+        gbMakeDraggable('gb-area2');
+        bankTens.draggable = false; bankOnes.draggable = false;
+      }
+      else if (gb.stage === 'move_sa' && gb.moved_o === total_o) {
+        gb.stage = 'move_puluh';
+        setInfo(`Betul! Langkah 4: Seret semua blok PULUH (biru) ke Hasil Puluh.`);
+        document.getElementById('gb-ans-o').classList.remove('pv-focus');
+        document.getElementById('gb-ans-t').classList.add('pv-focus');
+      }
+      else if (gb.stage === 'move_puluh' && gb.moved_t === total_t) {
+        gb.stage = 'done';
+        setInfo(`Siap! ${gb.n1} + ${gb.n2} = ${gb.n1 + gb.n2}. Tekan "Set Baharu".`);
+        document.getElementById('gb-ans-t').classList.remove('pv-focus');
+        document.getElementById('gb-explain').textContent = `${total_t} puluh + ${total_o} sa = ${total_t * 10 + total_o}`;
+      }
+    }
+
+    function gbMakeDraggable(areaId) {
+      document.querySelectorAll(`#${areaId} .block`).forEach(block => {
+        block.draggable = true;
+        block.classList.add('drag-item');
+        block.addEventListener('dragstart', dragStart);
+        block.addEventListener('dragend', dragEnd);
+      });
+    }
+
+    function gbHint() {
+      if (gb.stage === 'build1') setInfo(`Bina ${gb.n1}: Anda perlukan ${gb.n1_t} puluh dan ${gb.n1_o} sa.`);
+      else if (gb.stage === 'build2') setInfo(`Bina ${gb.n2}: Anda perlukan ${gb.n2_t} puluh dan ${gb.n2_o} sa.`);
+      else if (gb.stage === 'move_sa') setInfo(`Kumpulkan semua ${gb.n1_o + gb.n2_o} blok sa ke 'Hasil Sa'.`);
+      else if (gb.stage === 'move_puluh') setInfo(`Kumpulkan semua ${gb.n1_t + gb.n2_t} blok puluh ke 'Hasil Puluh'.`);
+      else if (gb.stage === 'done') setInfo(`Sudah siap! Jawapannya ${gb.n1 + gb.n2}.`);
+    }
+
+    // ================== Aktiviti 3: Petak 100 ==================
+    let hg={start:0,add:0,here:0,step:0};
+    function hgNew(){
+      const qs=[[15,3],[22,4],[31,5],[9,6]];
+      const p=qs[Math.floor(Math.random()*qs.length)];
+      hg={start:p[0], add:p[1], here:p[0], step:0};
+      document.getElementById('hg-title').textContent = `${hg.start}  +  ${hg.add}`;
+      document.getElementById('hg-work').textContent='';
+      const grid=document.getElementById('grid'); grid.innerHTML='';
+      for(let i=1;i<=100;i++){
+        const d=document.createElement('div');
+        d.className='grid-cell bg-blue-100 hover:bg-blue-200 border border-blue-200 text-center py-2 cursor-pointer text-sm font-bold';
+        d.textContent=i; d.id='g'+i; d.onclick=()=>hgTap(i);
+        grid.appendChild(d);
+      }
+      document.getElementById('g'+hg.start).classList.add('grid-start');
+      placeFrog(hg.start);
+      setInfo('Klik petak seterusnya atau tekan "Mainkan Langkah".');
+    }
+    function placeFrog(n){
+      const frog=document.getElementById('frog');
+      const cell=document.getElementById('g'+n);
+      const r=cell.getBoundingClientRect(), g=cell.parentElement.getBoundingClientRect();
+      const x=r.left-g.left + r.width/2 - 10, y=r.top-g.top + r.height/2 - 10;
+      frog.style.transform=`translate(${x}px,${y}px)`;
+    }
+    function hgTap(n){
+      const want=hg.here+1;
+      if(n===want){
+        document.getElementById('g'+n).classList.add(hg.step+1===hg.add?'grid-end':'grid-path');
+        hg.here=n; hg.step++;
+        placeFrog(n);
+        document.getElementById('hg-work').textContent = `${hg.start} + ${hg.step} = ${hg.here}`;
+        if(hg.step===hg.add){ setInfo(`Selesai: ${hg.start} + ${hg.add} = ${hg.here}`); }
+      }else{
+        const cell=document.getElementById('g'+want);
+        cell.classList.add('glow'); setTimeout(()=>cell.classList.remove('glow'),750);
+        setInfo(`Pergi ke petak selepas ${hg.here}.`);
+      }
+    }
+    function hgStep(){ if(hg.step<hg.add) hgTap(hg.here+1); }
+
+    // ================== Aktiviti 4: Padankan ==================
+    let mx=[];
+    function mxNew(){
+      const pool=[['12 + 5',17],['23 + 4',27],['31 + 6',37],['14 + 3',17],['25 + 2',27],['40 + 8',48]];
+      mx = pool.sort(()=>Math.random()-.5).slice(0,3);
+      const qs=document.getElementById('mx-q'); const as=document.getElementById('mx-a');
+      qs.innerHTML=''; as.innerHTML='';
+      const used = [...new Set(mx.map(x=>x[1]))];
+      mx.forEach(([q,a])=>{
+        const d=document.createElement('div');
+        d.className='sheet p-3 card-q cursor-pointer text-center font-extrabold';
+        d.textContent=q; d.onclick=()=>mxExplain(q,a);
+        qs.appendChild(d);
+      });
+      used.sort(()=>Math.random()-.5).forEach(v=>{
+        const d=document.createElement('div');
+        d.className='sheet p-3 card-a text-center font-extrabold'; d.id='ans-'+v; d.textContent=v;
+        as.appendChild(d);
+      });
+      document.getElementById('mx-exp').textContent='Klik satu soalan untuk penerangan.';
+      setInfo('Tekan mana-mana soalan – kita terangkan dan sorot jawapannya.');
+    }
+    function mxExplain(q,a){
+      document.querySelectorAll('#mx-a > div').forEach(x=>x.classList.remove('glow'));
+      const [x,y]=q.split('+').map(s=>parseInt(s.trim()));
+      document.getElementById('mx-exp').textContent = `${x} + ${y} = ${a} (tambah ${y} dari ${x})`;
+      const target=document.getElementById('ans-'+a); if(target){ target.classList.add('glow'); }
+    }
+
+    // ================== Aktiviti 5: Susun ==================
+    let sPool=[]; let sMode='asc';
+    function sNew(mode){
+      if(mode) sMode = mode;
+      sPool=[15,23,18,31,26].sort(()=>Math.random()-.5);
+      const pool=document.getElementById('s-pool'); pool.innerHTML='';
+      sPool.forEach(n=>{
+        const chip=document.createElement('div');
+        chip.className='chip-num drag-item'; chip.textContent=n; chip.draggable=true; chip.dataset.value=n;
+        chip.addEventListener('dragstart',dragStart); chip.addEventListener('dragend',dragEnd);
+        pool.appendChild(chip);
+      });
+      const cap=document.getElementById('s-caption');
+      cap.textContent = (sMode==='asc') ? '← paling kecil | paling besar →' : '← paling besar | paling kecil →';
+
+      document.querySelectorAll('.slot').forEach((s)=>{
+        s.textContent=''; s.classList.remove('ready'); s.dataset.filled='';
+        s.ondragover=(e)=>{ e.preventDefault(); s.classList.add('ready'); };
+        s.ondragleave=()=>s.classList.remove('ready');
+        s.ondrop=(e)=>{
+          e.preventDefault(); s.classList.remove('ready'); if(!dragging) return;
+          autoPlace(parseInt(dragging.dataset.value));
+          dragging.remove();
+        };
+      });
+      setInfo(`Seret mana-mana nombor – sistem bantu letak mengikut tertib ${sMode==='asc'?'menaik':'menurun'}.`);
+    }
+    function autoPlace(val){
+      const slots=[...document.querySelectorAll('.slot')];
+      const current=slots.map(s=>parseInt(s.dataset.filled||'')).filter(n=>!isNaN(n));
+      const all=[...current,val].sort((a,b)=> sMode==='asc' ? (a-b) : (b-a));
+      slots.forEach(s=>{ s.dataset.filled=''; s.textContent=''; });
+      all.forEach((n,i)=>{ const s=slots[i]; s.dataset.filled=n; s.textContent=n; });
+      if(all.length===slots.length) setInfo('Hebat! Semua nombor kini tersusun.');
+    }
+    function sDemo(){
+      const pool=[...document.querySelectorAll('#s-pool .drag-item')];
+      if(pool.length===0) return;
+      pool.sort((a,b)=> sMode==='asc'
+                    ? (parseInt(a.dataset.value)-parseInt(b.dataset.value))
+                    : (parseInt(b.dataset.value)-parseInt(a.dataset.value)))
+          .forEach((chip,i)=>{ setTimeout(()=>{ autoPlace(parseInt(chip.dataset.value)); chip.remove(); }, i*300); });
+      setInfo('Contoh auto-susun sedang dimainkan…');
+    }
+
+    // init
+    home();
+  </script>
+</body>
+</html>
